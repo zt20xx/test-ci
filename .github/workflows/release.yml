@@ -1,0 +1,51 @@
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - 'v*'  # 当推送以v开头的标签时触发（例如 v1.0.0）
+    branches:
+      - main  # 或者你的主分支名称
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up GCC
+      run: sudo apt-get install -y gcc
+      
+    - name: Build the project
+      run: gcc -o hello test.c  # 假设你的代码在main.c中
+      
+    - name: Upload artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: hello-ci
+        path: hello
+        
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Download artifact
+      uses: actions/download-artifact@v3
+      with:
+        name: hello-ci
+        
+    - name: Create Release
+      id: create_release
+      uses: softprops/action-gh-release@v1
+      with:
+        name: Hello CI Release
+        body: Automatic release of hello-ci
+        prerelease: false
+        draft: false
+        files: hello
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
